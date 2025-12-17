@@ -227,16 +227,22 @@ namespace Quaver.API.Replays.Virtual
                                 .Concat(previousFramePressed.Except(currentFramePressed))
                                 .ToList();
 
+            // Handle mines that were hit between frames.
+            // The previous frame's pressed keys are held up until now, so [previousFrameTime..Time)
+            // is the interval to check for mine hits.
             foreach (var lane in previousFramePressed)
             {
                 foreach (var mine in ActiveMines)
                 {
+                    // Check for any mines that were hit between the previous and the current frame
                     var endTime = mine.IsLongNote ? mine.EndTime : mine.StartTime;
                     if (mine.Lane == lane + 1 
                         && endTime + ScoreProcessor.JudgementWindow[Judgement.Marv] > previousFrameTime
                         && Time >= mine.StartTime - ScoreProcessor.JudgementWindow[Judgement.Marv])
                     {
                         // Calculate the hit difference.
+                        // If this lane had been pressed before the mine appeared, give maximum early hit window
+                        // If pressed somewhere within the mine's hit window, accurate hit error can be given
                         var hitDifference = 
                             mine.StartTime - ScoreProcessor.JudgementWindow[Judgement.Marv] > previousFrameTime
                             ? (int)ScoreProcessor.JudgementWindow[Judgement.Marv]
@@ -246,6 +252,7 @@ namespace Quaver.API.Replays.Virtual
                         var stat = new HitStat(HitStatType.Miss, KeyPressType.Press, mine, Time, Judgement.Miss, hitDifference,
                             ScoreProcessor.Accuracy, ScoreProcessor.Health);
 
+                        ScoreProcessor.CalculateScore(stat);
                         ScoreProcessor.Stats.Add(stat);
 
                         // Object needs to be removed from ActiveObjects.
@@ -430,16 +437,17 @@ namespace Quaver.API.Replays.Virtual
                 }
             }
             // Handle missed mines.
+            // 'Missed' as in the mines were not triggered, meaning a marvelous judgement should be given.
             foreach (var hitObject in ActiveMines)
             {
                 var endTime = hitObject.IsLongNote ? hitObject.EndTime : hitObject.StartTime;
                 if (Time > endTime + ScoreProcessor.JudgementWindow[Judgement.Marv])
                 {
                     // Create a new HitStat to add to the ScoreProcessor.
+                    // Award a Marvelous for successfully avoiding the mine.
                     var stat = new HitStat(HitStatType.Hit, KeyPressType.None, hitObject, hitObject.StartTime, Judgement.Marv, 0,
                         ScoreProcessor.Accuracy, ScoreProcessor.Health);
 
-                    // Add a miss to the score.
                     ScoreProcessor.CalculateScore(stat);
 
                     ScoreProcessor.Stats.Add(stat);
