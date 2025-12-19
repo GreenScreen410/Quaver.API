@@ -185,6 +185,19 @@ namespace Quaver.API.Maps
         /// </summary>
         public List<HitObjectInfo> HitObjects { get; private set; } = new List<HitObjectInfo>();
 
+        /// <summary>
+        ///     Number of mines in the map
+        /// </summary>
+        [YamlIgnore]
+        public int MineCount => HitObjects.Count(x => x.Type is HitObjectType.Mine);
+
+        /// <summary>
+        ///     Number of notes counted for diffcalc.
+        ///     Currently, it's every note except mines
+        /// </summary>
+        [YamlIgnore]
+        public int DifficultyContributingHitObjects => HitObjects.Count - MineCount;
+
         public Dictionary<string, TimingGroup> TimingGroups { get; private set; } =
             new Dictionary<string, TimingGroup>();
 
