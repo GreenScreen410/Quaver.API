@@ -26,6 +26,14 @@ namespace Quaver.API.Maps
     [Serializable] // ReSharper disable CognitiveComplexity CompareOfFloatsByEqualityOperator
     public class Qua
     {
+        // 0 versioning added
+        public int QuaVersion { get; set; } = 0;
+
+        // Max supported version by this client
+        // This should be incremented whenever breaking changes are made to quas
+        // DetermineMinimumQuaVersion() should also be updated to allow older clients to load maps without new features
+        public const int CurrentQuaVersion = 0;
+
         /// <summary>
         ///     The name of the audio file
         /// </summary>
@@ -303,6 +311,12 @@ namespace Quaver.API.Maps
                 .WithTagMapping("!ScrollGroup", typeof(ScrollGroup))
                 .Build();
 
+        
+        public int DetermineMinimumQuaVersion()
+        {
+            return 0;
+        }
+
         /// <summary>
         ///     Loads a .qua file from a stream
         /// </summary>
@@ -374,6 +388,8 @@ namespace Quaver.API.Maps
 
             // Sort the object before saving.
             Sort();
+
+            QuaVersion = DetermineMinimumQuaVersion();
 
             // Set default values to zero so they don't waste space in the .qua file.
             var originalTimingPoints = TimingPoints;
@@ -1164,6 +1180,9 @@ namespace Quaver.API.Maps
         {
             if (checkValidity && qua.Validate() is var errors && errors.Count > 0)
                 throw new ArgumentException(string.Join("\n", errors));
+
+            if (qua.QuaVersion > Qua.CurrentQuaVersion)
+                throw new QuaVersionException($"Map \"{qua.Artist} - {qua.Title}\" cannot be loaded because it requires features from a newer client.");
 
             // Try to sort the Qua before returning.
             qua.Sort();
