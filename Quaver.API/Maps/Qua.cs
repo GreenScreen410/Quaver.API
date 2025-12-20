@@ -27,12 +27,13 @@ namespace Quaver.API.Maps
     public class Qua
     {
         // 0 versioning added
+        // 1 mines
         public int QuaVersion { get; set; } = 0;
 
         // Max supported version by this client
         // This should be incremented whenever breaking changes are made to quas
         // DetermineMinimumQuaVersion() should also be updated to allow older clients to load maps without new features
-        public const int CurrentQuaVersion = 0;
+        public const int CurrentQuaVersion = 1;
 
         /// <summary>
         ///     The name of the audio file
@@ -193,6 +194,19 @@ namespace Quaver.API.Maps
         /// </summary>
         public List<HitObjectInfo> HitObjects { get; private set; } = new List<HitObjectInfo>();
 
+        /// <summary>
+        ///     Number of mines in the map
+        /// </summary>
+        [YamlIgnore]
+        public int MineCount => HitObjects.Count(x => x.Type is HitObjectType.Mine);
+
+        /// <summary>
+        ///     Number of notes counted for diffcalc.
+        ///     Currently, it's every note except mines
+        /// </summary>
+        [YamlIgnore]
+        public int DifficultyContributingHitObjects => HitObjects.Count - MineCount;
+
         public Dictionary<string, TimingGroup> TimingGroups { get; private set; } =
             new Dictionary<string, TimingGroup>();
 
@@ -314,7 +328,19 @@ namespace Quaver.API.Maps
         
         public int DetermineMinimumQuaVersion()
         {
-            return 0;
+            int ver = 0;
+
+            void Check(int v, Func<bool> f)
+            {
+                if (ver < v && f())
+                {
+                    ver = v;
+                }
+            }
+
+            Check(1, () => MineCount != 0);
+
+            return ver;
         }
 
         /// <summary>
@@ -373,7 +399,8 @@ namespace Quaver.API.Maps
                        .Select(x => new KeySoundInfo { Sample = x.Sample, Volume = x.Volume == 100 ? 0 : x.Volume })
                        .ToList(),
                     Lane = obj.Lane, StartTime = obj.StartTime,
-                    TimingGroup = obj.TimingGroup == DefaultScrollGroupId ? null : obj.TimingGroup
+                    TimingGroup = obj.TimingGroup == DefaultScrollGroupId ? null : obj.TimingGroup,
+                    Type = obj.Type
                 };
 
             static SoundEffectInfo SerializableSoundEffect(SoundEffectInfo x) =>
@@ -1117,8 +1144,15 @@ namespace Quaver.API.Maps
 
             // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var h in HitObjects)
-                if (total++ == index || (h.IsLongNote && total++ == index))
+            {
+                var judgementCount = h.JudgementCount;
+                if (total <= index && index < total + judgementCount)
+                {
                     return h;
+                }
+
+                total += judgementCount;
+            }
 
             return null;
         }
