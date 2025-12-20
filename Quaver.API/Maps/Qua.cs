@@ -27,12 +27,13 @@ namespace Quaver.API.Maps
     public class Qua
     {
         // 0 versioning added
+        // 1 mines
         public int QuaVersion { get; set; } = 0;
 
         // Max supported version by this client
         // This should be incremented whenever breaking changes are made to quas
         // DetermineMinimumQuaVersion() should also be updated to allow older clients to load maps without new features
-        public const int CurrentQuaVersion = 0;
+        public const int CurrentQuaVersion = 1;
 
         /// <summary>
         ///     The name of the audio file
@@ -327,7 +328,19 @@ namespace Quaver.API.Maps
         
         public int DetermineMinimumQuaVersion()
         {
-            return 0;
+            int ver = 0;
+
+            void Check(int v, Func<bool> f)
+            {
+                if (ver < v && f())
+                {
+                    ver = v;
+                }
+            }
+
+            Check(1, () => MineCount != 0);
+
+            return ver;
         }
 
         /// <summary>
