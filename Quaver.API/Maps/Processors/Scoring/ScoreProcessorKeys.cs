@@ -14,7 +14,6 @@ using Quaver.API.Helpers;
 using Quaver.API.Maps.Processors.Scoring.Data;
 using Quaver.API.Maps.Processors.Scoring.Multiplayer;
 using Quaver.API.Replays;
-using HitObjectType = Quaver.API.Enums.HitObjectType;
 
 namespace Quaver.API.Maps.Processors.Scoring
 {
@@ -174,9 +173,7 @@ namespace Quaver.API.Maps.Processors.Scoring
         /// <param name="hitDifference"></param>
         /// <param name="keyPressType"></param>
         /// <param name="calculateAllStats"></param>
-        /// <param name="isMine"></param>
-        public Judgement CalculateScore(int hitDifference, KeyPressType keyPressType, bool calculateAllStats = true,
-            bool isMine = false)
+        public Judgement CalculateScore(int hitDifference, KeyPressType keyPressType, bool calculateAllStats = true)
         {
             var absoluteDifference = 0;
 
@@ -225,15 +222,9 @@ namespace Quaver.API.Maps.Processors.Scoring
                 return judgement;
 
             if (calculateAllStats)
-                CalculateScore(judgement, keyPressType == KeyPressType.Release, isMine);
+                CalculateScore(judgement, keyPressType == KeyPressType.Release);
 
             return judgement;
-        }
-
-        public void CalculateScore(HitStat hitStat)
-        {
-            CalculateScore(hitStat.Judgement, hitStat.KeyPressType == KeyPressType.Release,
-                hitStat.HitObject.Type is HitObjectType.Mine);
         }
 
         /// <inheritdoc />
@@ -242,8 +233,7 @@ namespace Quaver.API.Maps.Processors.Scoring
         /// </summary>
         /// <param name="judgement"></param>
         /// <param name="isLongNoteRelease"></param>
-        /// <param name="isMine"></param>
-        public override void CalculateScore(Judgement judgement, bool isLongNoteRelease = false, bool isMine = false)
+        public override void CalculateScore(Judgement judgement, bool isLongNoteRelease = false)
         {
             // Update Judgement count
             CurrentJudgements[judgement]++;
@@ -267,9 +257,7 @@ namespace Quaver.API.Maps.Processors.Scoring
                     MultiplierCount++;
 
                 // Add to the combo since the user hit.
-                // Only do this when the note is not a mine (so it is a regular note)
-                if (!isMine)
-                    Combo++;
+                Combo++;
 
                 // Set the max combo if applicable.
                 if (Combo > MaxCombo)
@@ -384,7 +372,17 @@ namespace Quaver.API.Maps.Processors.Scoring
         /// <returns></returns>
         public int GetTotalJudgementCount()
         {
-            return Map.HitObjects.Sum(o => o.JudgementCount);
+            var judgements = 0;
+
+            foreach (var o in Map.HitObjects)
+            {
+                if (o.IsLongNote)
+                    judgements += 2;
+                else
+                    judgements++;
+            }
+
+            return judgements;
         }
 
         /// <summary>

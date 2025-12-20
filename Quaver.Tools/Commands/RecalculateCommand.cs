@@ -63,22 +63,22 @@ namespace Quaver.Tools.Commands
                 var processor = new ScoreProcessorKeys(qua, 0);
 
                 for (var i = 0; i < (int)score["count_marv"]; i++)
-                    processor.CalculateScore(Judgement.Marv, false, false);
+                    processor.CalculateScore(Judgement.Marv);
 
                 for (var i = 0; i < (int)score["count_perf"]; i++)
-                    processor.CalculateScore(Judgement.Perf, false, false);
+                    processor.CalculateScore(Judgement.Perf);
 
                 for (var i = 0; i < (int)score["count_great"]; i++)
-                    processor.CalculateScore(Judgement.Great, false, false);
+                    processor.CalculateScore(Judgement.Great);
 
                 for (var i = 0; i < (int)score["count_good"]; i++)
-                    processor.CalculateScore(Judgement.Good, false, false);
+                    processor.CalculateScore(Judgement.Good);
 
                 for (var i = 0; i < (int)score["count_okay"]; i++)
-                    processor.CalculateScore(Judgement.Okay, false, false);
+                    processor.CalculateScore(Judgement.Okay);
 
                 for (var i = 0; i < (int)score["count_miss"]; i++)
-                    processor.CalculateScore(Judgement.Miss, false, false);
+                    processor.CalculateScore(Judgement.Miss);
 
                 var difficultyRating = (double)score["performance_rating"] / Math.Pow((double)score["accuracy"] / 98, 6);
 
