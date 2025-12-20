@@ -137,7 +137,7 @@ namespace Quaver.API.Maps.Processors.Difficulty.Rulesets.Keys
             StrainConstants = (StrainConstantsKeys)constants;
 
             // Don't bother calculating map difficulty if there's less than 2 hit objects
-            if (map.HitObjects.Count < 2)
+            if (map.DifficultyContributingHitObjects < 2)
                 return;
 
             // Solve for difficulty
@@ -202,6 +202,8 @@ namespace Quaver.API.Maps.Processors.Difficulty.Rulesets.Keys
             for (var i = 0; i < Map.HitObjects.Count; i++)
             {
                 if (Map.HasScratchKey && Map.HitObjects[i].Lane == Map.GetKeyCount())
+                    continue;
+                if (Map.HitObjects[i].Type == HitObjectType.Mine)
                     continue;
 
                 var curHitOb = new StrainSolverHitObject(Map.HitObjects[i]);
@@ -675,7 +677,7 @@ namespace Quaver.API.Maps.Processors.Difficulty.Rulesets.Keys
         private void ComputeNoteDensityData(float rate)
         {
             //MapLength = Qua.Length;
-            AverageNoteDensity = SECONDS_TO_MILLISECONDS * Map.HitObjects.Count / (Map.Length * (-.5f * rate + 1.5f));
+            AverageNoteDensity = SECONDS_TO_MILLISECONDS * Map.DifficultyContributingHitObjects / (Map.Length * (-.5f * rate + 1.5f));
         }
 
         /// <summary>
