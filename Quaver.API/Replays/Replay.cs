@@ -378,6 +378,10 @@ namespace Quaver.API.Replays
                 replay.Frames.Add(new ReplayFrame(item.Key, state));
             }
 
+            // Add ending frame w/ no press state. (+10000 just to be on the safe side.)
+            // This ensures that mines are handled at the end of the map.
+            replay.Frames.Add(new ReplayFrame(map.Length + 10000, 0));
+
             return replay;
         }
 

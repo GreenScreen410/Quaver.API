@@ -153,8 +153,15 @@ namespace Quaver.API.Replays.Virtual
                     {
                         var obj = Map.GetHitObjectAtJudgementIndex(i);
 
-                        var hitStat = new HitStat(HitStatType.Miss, KeyPressType.None, obj, obj.StartTime,
-                            Judgement.Miss, int.MinValue, ScoreProcessor.Accuracy, ScoreProcessor.Health);
+                        var hitStat = obj.Type switch
+                        {
+                            HitObjectType.Normal => new HitStat(HitStatType.Miss, KeyPressType.None, obj, obj.StartTime,
+                                Judgement.Miss, int.MinValue, ScoreProcessor.Accuracy, ScoreProcessor.Health),
+                            HitObjectType.Mine => new HitStat(HitStatType.Hit, KeyPressType.None, obj, obj.StartTime,
+                                Judgement.Marv, 0, ScoreProcessor.Accuracy, ScoreProcessor.Health),
+                            _ => throw new ArgumentOutOfRangeException(nameof(obj.Type), obj.Type,
+                                "Unhandled note type")
+                        };
 
                         ScoreProcessor.CalculateScore(hitStat);
 
@@ -230,6 +237,8 @@ namespace Quaver.API.Replays.Virtual
             // Handle mines that were hit between frames.
             // The previous frame's pressed keys are held up until now, so [previousFrameTime..Time)
             // is the interval to check for mine hits.
+            // This covers the last frame too! see ReplayCapturer.Capture: it adds a frame if judgement count
+            // does not match expected, forcing another call into this.
             foreach (var lane in previousFramePressed)
             {
                 foreach (var mine in ActiveMines)
